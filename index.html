@@ -79,11 +79,13 @@ footer{text-align:center;color:#70839e;padding:35px}
 </style>
 </head>
 <script>
-(function () {
+document.addEventListener("DOMContentLoaded", function () {
   const lock = document.getElementById("family-lock");
   const form = document.getElementById("family-form");
   const password = document.getElementById("family-password");
   const error = document.getElementById("family-error");
+
+  if (!lock || !form || !password || !error) return;
 
   if (sessionStorage.getItem("family-unlocked") === "yes") {
     lock.style.display = "none";
@@ -100,8 +102,9 @@ footer{text-align:center;color:#70839e;padding:35px}
       password.value = "";
     }
   });
-})();
+});
 </script>
+  
 <body>
 <div id="family-lock">
   <div class="lock-box">
