@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TwojWydruk3D</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#111418;color:#f4f4f4;font-family:Arial,sans-serif}
+header{padding:25px 8%;background:#1b2026;border-bottom:3px solid #ff7900}
+h1{margin:0;color:#ff7900}
+main{max-width:850px;margin:60px auto;padding:20px}
+.card{background:#1b2026;padding:30px;border-radius:14px;border:1px solid #343b43}
+input,button{padding:15px;border-radius:8px;border:0;font-size:16px}
+input{width:100%;margin:15px 0;background:#fff}
+button{background:#ff7900;color:#111;font-weight:bold;cursor:pointer}
+footer{text-align:center;color:#888;margin:50px}
+</style>
+</head>
+<body>
+<header>
+<h1>TwojWydruk3D</h1>
+<p>Śledzenie zamówień druku 3D</p>
+</header>
+<main>
+<div class="card">
+<h2>Sprawdź swoje zamówienie</h2>
+<p>Wpisz kod otrzymany od administratora.</p>
+<input id="code" placeholder="Np. TWD-2026-0001">
+<button onclick="checkOrder()">Sprawdź zamówienie</button>
+<p id="result"></p>
+</div>
+</main>
+<footer>TwojWydruk3D © 2026</footer>
+<script>
+function checkOrder(){
+document.getElementById("result").textContent=
+"System zamówień będzie dostępny po podłączeniu bazy danych.";
+}
+</script>
+</body>
+</html>
