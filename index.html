@@ -1,6 +1,49 @@
 
 <!DOCTYPE html>
 <html lang="pl">
+<style>
+#family-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: #080d18;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, sans-serif;
+  color: white;
+}
+#family-lock .lock-box {
+  background: #111c30;
+  padding: 35px;
+  border-radius: 20px;
+  text-align: center;
+  width: min(340px, 85%);
+  border: 1px solid #263c60;
+}
+#family-lock input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+  margin: 15px 0;
+  border-radius: 10px;
+  border: 1px solid #42618c;
+  background: #080d18;
+  color: white;
+  font-size: 16px;
+}
+#family-lock button {
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #2478ff;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+#family-lock p { color: #ff7777; }
+</style>
 <head>
 <meta name="google-site-verification" content="3_0aG8eJf2lCQe54f4h8IPsL5qJrL3amlWKbn6pi1Vo" />
 <meta charset="UTF-8">
@@ -35,8 +78,44 @@ button:hover{background:#0870c4}
 footer{text-align:center;color:#70839e;padding:35px}
 </style>
 </head>
-<body>
+<script>
+(function () {
+  const lock = document.getElementById("family-lock");
+  const form = document.getElementById("family-form");
+  const password = document.getElementById("family-password");
+  const error = document.getElementById("family-error");
 
+  if (sessionStorage.getItem("family-unlocked") === "yes") {
+    lock.style.display = "none";
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    if (password.value === "Bial0brzegi") {
+      sessionStorage.setItem("family-unlocked", "yes");
+      lock.style.display = "none";
+    } else {
+      error.textContent = "Nieprawidłowe hasło!";
+      password.value = "";
+    }
+  });
+})();
+</script>
+<body>
+<div id="family-lock">
+  <div class="lock-box">
+    <div style="font-size:45px">🔒</div>
+    <h2>TwojWydruk3D</h2>
+    <p style="color:#aabbd3">Strona tylko dla rodziny</p>
+    <form id="family-form">
+      <input id="family-password" type="password"
+        placeholder="Wpisz hasło rodzinne" required>
+      <button type="submit">Odblokuj stronę</button>
+      <p id="family-error"></p>
+    </form>
+  </div>
+</div>
 <header>
 <div class="logo">TwojWydruk3D</div>
 <nav>
