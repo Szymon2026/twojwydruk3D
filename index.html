@@ -5,39 +5,259 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TwojWydruk3D</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#111418;color:#f4f4f4;font-family:Arial,sans-serif}
-header{padding:25px 8%;background:#1b2026;border-bottom:3px solid #ff7900}
-h1{margin:0;color:#ff7900}
-main{max-width:850px;margin:60px auto;padding:20px}
-.card{background:#1b2026;padding:30px;border-radius:14px;border:1px solid #343b43}
-input,button{padding:15px;border-radius:8px;border:0;font-size:16px}
-input{width:100%;margin:15px 0;background:#fff}
-button{background:#ff7900;color:#111;font-weight:bold;cursor:pointer}
-footer{text-align:center;color:#888;margin:50px}
+body{margin:0;background:#080d18;color:#f4f7ff;font-family:Arial,sans-serif}
+header{padding:22px 7%;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1c2b43}
+.logo{font-size:25px;font-weight:900;color:#38a5ff}
+nav a{color:#c8d5e8;text-decoration:none;margin-left:18px;font-size:14px}
+.hero{text-align:center;padding:85px 20px 65px;background:radial-gradient(ellipse at top,#102b50,#080d18 70%)}
+.hero h1{font-size:clamp(35px,6vw,65px);margin:0 0 18px}
+.blue{color:#39a9ff}
+.hero p{color:#a8b8ce;font-size:17px}
+.container{max-width:1050px;margin:35px auto;padding:0 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:22px}
+.card{background:#101a2b;border:1px solid #203653;border-radius:17px;padding:25px;margin-bottom:22px}
+h2{margin-top:0}
+input,textarea,button{width:100%;padding:14px;margin:8px 0;border-radius:9px;font-size:15px}
+input,textarea{background:#080f1c;border:1px solid #30435d;color:white}
+textarea{min-height:95px;resize:vertical}
+button{background:#168bea;color:white;border:0;font-weight:bold;cursor:pointer}
+button:hover{background:#0870c4}
+.secondary{background:#24364f}
+.result{margin-top:15px;padding:14px;border-radius:10px;background:#0a223b;overflow-wrap:anywhere}
+.small{font-size:13px;color:#91a6c1}
+.hidden{display:none}
+.order{border:1px solid #30435d;border-radius:10px;padding:15px;margin:12px 0}
+.order select{width:100%;padding:12px;background:#080f1c;color:white;border:1px solid #30435d;border-radius:8px}
+footer{text-align:center;color:#70839e;padding:35px}
 </style>
 </head>
 <body>
+
 <header>
-<h1>TwojWydruk3D</h1>
-<p>Śledzenie zamówień druku 3D</p>
+<div class="logo">TwojWydruk3D</div>
+<nav>
+<a href="#zamowienie">Zamówienie</a>
+<a href="#sledzenie">Śledzenie</a>
+<a href="#admin">Admin</a>
+</nav>
 </header>
-<main>
-<div class="card">
-<h2>Sprawdź swoje zamówienie</h2>
-<p>Wpisz kod otrzymany od administratora.</p>
-<input id="code" placeholder="Np. TWD-2026-0001">
-<button onclick="checkOrder()">Sprawdź zamówienie</button>
-<p id="result"></p>
+
+<section class="hero">
+<h1>Twój pomysł.<br><span class="blue">Nasz wydruk 3D.</span></h1>
+<p>Tworzymy rzeczy, które wcześniej istniały tylko w Twojej wyobraźni.</p>
+</section>
+
+<main class="container">
+<div class="grid">
+<section class="card" id="zamowienie">
+<h2>📦 Złóż zamówienie</h2>
+<p class="small">Opowiedz nam, co chcesz wydrukować.</p>
+<form id="orderForm">
+<input id="customer" placeholder="Twoje imię" required maxlength="80">
+<textarea id="description" placeholder="Opisz swój projekt..." required maxlength="1500"></textarea>
+<button type="submit">Wyślij zamówienie</button>
+</form>
+<div id="orderResult" class="result hidden"></div>
+</section>
+
+<section class="card" id="sledzenie">
+<h2>🔎 Śledź zamówienie</h2>
+<p class="small">Wpisz kod otrzymany po złożeniu zamówienia.</p>
+<form id="trackForm">
+<input id="trackCode" placeholder="Np. ABC123XYZ" required>
+<button type="submit">Sprawdź status</button>
+</form>
+<div id="trackResult" class="result hidden"></div>
+</section>
 </div>
+
+<section class="card" id="admin">
+<h2>🔐 Panel administratora</h2>
+<div id="loginBox">
+<p class="small">Zaloguj się na konto administratora Supabase.</p>
+<form id="loginForm">
+<input id="email" type="email" placeholder="Adres e-mail" required>
+<input id="password" type="password" placeholder="Hasło" required>
+<button type="submit">Zaloguj się</button>
+</form>
+</div>
+<div id="adminBox" class="hidden">
+<p class="blue">Jesteś zalogowany jako administrator.</p>
+<button id="refreshOrders">Odśwież zamówienia</button>
+<button id="logout" class="secondary">Wyloguj</button>
+<div id="ordersList"></div>
+</div>
+<div id="adminMessage" class="small"></div>
+</section>
 </main>
-<footer>TwojWydruk3D © 2026</footer>
+
+<footer>© 2026 TwojWydruk3D · Druk 3D z pasją</footer>
+
 <script>
-function checkOrder(){
-document.getElementById("result").textContent=
-"System zamówień będzie dostępny po podłączeniu bazy danych.";
+const SUPABASE_URL = "https://zddvhtzxkwrtqxencedl.supabase.co";
+const SUPABASE_KEY = "sb_publishable_hesR-GY6uyRnRskajNWeEg_m3x-OO86";
+
+const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const $ = id => document.getElementById(id);
+
+function message(id,text){
+  $(id).textContent=text;
+  $(id).classList.remove("hidden");
 }
+
+$("orderForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const btn=e.submitter;
+  btn.disabled=true;
+  btn.textContent="Wysyłanie...";
+
+  try{
+    const code=crypto.randomUUID().replaceAll("-","").slice(0,12).toUpperCase();
+
+    const {error}=await db.from("orders").insert({
+      order_code:code,
+      customer_name:$("customer").value.trim(),
+      description:$("description").value.trim(),
+      status:"Przyjęte"
+    });
+
+    if(error) throw error;
+
+    message("orderResult","Zamówienie wysłane! Twój kod: "+code+
+    " — Zapisz go, będzie potrzebny do śledzenia.");
+    $("orderForm").reset();
+  }catch(err){
+    message("orderResult","Nie udało się wysłać zamówienia: "+err.message);
+  }finally{
+    btn.disabled=false;
+    btn.textContent="Wyślij zamówienie";
+  }
+});
+
+$("trackForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const code=$("trackCode").value.trim().toUpperCase();
+
+  try{
+    const {data,error}=await db.rpc("check_order",{
+      order_code_input:code
+    });
+
+    if(error) throw error;
+
+    if(!data || data.length===0){
+      message("trackResult","Nie znaleziono zamówienia. Sprawdź kod.");
+      return;
+    }
+
+    const order=data[0];
+    $("trackResult").innerHTML=
+      "<strong>Status: "+escapeHTML(order.status)+"</strong>"+
+      (order.estimated_date?
+      "<p>Przewidywana data: "+escapeHTML(order.estimated_date)+"</p>":"");
+    $("trackResult").classList.remove("hidden");
+  }catch(err){
+    message("trackResult","Błąd: "+err.message);
+  }
+});
+
+function escapeHTML(value){
+  return String(value??"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+async function loadOrders(){
+  const {data,error}=await db.from("orders")
+    .select("id,order_code,customer_name,description,status,estimated_date")
+    .order("id",{ascending:false});
+
+  if(error){
+    $("ordersList").textContent="Błąd: "+error.message;
+    return;
+  }
+
+  $("ordersList").innerHTML="";
+
+  if(!data.length){
+    $("ordersList").textContent="Brak zamówień.";
+    return;
+  }
+
+  data.forEach(order=>{
+    const div=document.createElement("div");
+    div.className="order";
+    const heading=document.createElement("h3");
+    heading.textContent="Zamówienie "+order.order_code;
+    const details=document.createElement("p");
+    details.textContent=order.customer_name+" — "+order.description;
+    const select=document.createElement("select");
+
+    ["Przyjęte","W realizacji","Gotowe","Wysłane"].forEach(status=>{
+      const option=document.createElement("option");
+      option.value=status;
+      option.textContent=status;
+      option.selected=status===order.status;
+      select.appendChild(option);
+    });
+
+    const save=document.createElement("button");
+    save.textContent="Zapisz status";
+    save.onclick=async()=>{
+      const {error}=await db.from("orders")
+        .update({status:select.value})
+        .eq("id",order.id);
+      if(error){
+        alert("Błąd: "+error.message);
+      }else{
+        alert("Status został zmieniony!");
+        loadOrders();
+      }
+    };
+
+    div.append(heading,details,select,save);
+    $("ordersList").appendChild(div);
+  });
+}
+
+$("loginForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const {error}=await db.auth.signInWithPassword({
+    email:$("email").value,
+    password:$("password").value
+  });
+
+  if(error){
+    $("adminMessage").textContent="Błąd logowania: "+error.message;
+    return;
+  }
+  showAdmin();
+});
+
+async function showAdmin(){
+  const {data}=await db.auth.getSession();
+  const session=data.session;
+  $("loginBox").classList.toggle("hidden",!!session);
+  $("adminBox").classList.toggle("hidden",!session);
+  if(session) loadOrders();
+}
+
+$("logout").onclick=async()=>{
+  await db.auth.signOut();
+  showAdmin();
+};
+
+$("refreshOrders").onclick=loadOrders;
+
+db.auth.onAuthStateChange(()=>{
+  showAdmin();
+});
+
+showAdmin();
 </script>
 </body>
 </html>
